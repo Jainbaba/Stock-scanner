@@ -6,7 +6,7 @@ buildCommand = "echo 'Building both services...'"
 startCommand = "echo 'Starting services...'"
 healthcheckPath = "/"
 healthcheckTimeout = 100
-restartPolicyType = "on-failure"
+restartPolicy = "on-failure"  # Changed from restartPolicyType to restartPolicy
 
 [[services]]
 name = "backend"
@@ -27,4 +27,4 @@ healthcheckPath = "/"
 buildCommand = "npm install && npm run build"
 envs = [
     "NEXT_PUBLIC_API_URL"
-] 
+]
