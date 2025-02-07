@@ -1,0 +1,30 @@
+[build]
+builder = "nixpacks"
+buildCommand = "echo 'Building both services...'"
+
+[deploy]
+startCommand = "echo 'Starting services...'"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on-failure"
+
+[[services]]
+name = "backend"
+directory = "."
+startCommand = "gunicorn app:app"
+healthcheckPath = "/api/stocks/current"
+envs = [
+    "MONGODB_URI",
+    "FLASK_ENV",
+    "CORS_ORIGIN"
+]
+
+[[services]]
+name = "frontend"
+directory = "stock-scanner-frontend"
+startCommand = "npm run start"
+healthcheckPath = "/"
+buildCommand = "npm install && npm run build"
+envs = [
+    "NEXT_PUBLIC_API_URL"
+] 
