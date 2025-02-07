@@ -4,15 +4,16 @@ buildCommand = "echo 'Building both services...'"
 
 [deploy]
 startCommand = "echo 'Starting services...'"
-healthcheckPath = "/"
-healthcheckTimeout = 100
-restartPolicy = "on-failure"  # Changed from restartPolicyType to restartPolicy
+healthcheckTimeout = 180
+restartPolicy = "on-failure"
 
 [[services]]
 name = "backend"
-directory = "."
-startCommand = "gunicorn app:app"
+directory = "stock-scanner-backend"  # Updated to correct backend directory
+startCommand = "gunicorn -c gunicorn.conf.py app:app"  # Updated to use gunicorn config
 healthcheckPath = "/api/stocks/current"
+healthcheckTimeout = 180
+buildCommand = "pip install -r requirements.txt"  # Added pip install command
 envs = [
     "MONGODB_URI",
     "FLASK_ENV",
@@ -23,8 +24,9 @@ envs = [
 name = "frontend"
 directory = "stock-scanner-frontend"
 startCommand = "npm run start"
-healthcheckPath = "/"
+healthcheckPath = "/api/health"
 buildCommand = "npm install && npm run build"
+healthcheckTimeout = 180
 envs = [
     "NEXT_PUBLIC_API_URL"
 ]

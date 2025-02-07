@@ -1,3 +1,4 @@
+import time
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os
@@ -16,6 +17,18 @@ app = Flask(__name__)
 # Get CORS origin from environment variable
 CORS_ORIGIN = os.getenv('CORS_ORIGIN', 'http://localhost:3000')
 CORS(app, origins=[CORS_ORIGIN])
+
+startup_delay = int(os.getenv('STARTUP_DELAY_SECONDS', '5'))
+time.sleep(startup_delay)
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Simple health check endpoint."""
+    return jsonify({
+        "status": "healthy",
+        "timestamp": time.time()
+    })
+
 
 @app.route('/api/trigger-fetch', methods=['POST'])
 def trigger_fetch():
