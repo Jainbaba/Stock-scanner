@@ -25,7 +25,7 @@ export interface Log {
 }
 
 export async function getCurrentStocks(): Promise<Stock> {
-  const response = await fetch(`${API_BASE_URL}/api/stocks/current`);
+  const response = await fetch(`${API_BASE_URL}/stocks/current`);
   const data = await response.json();
   if (!data.success) {
     throw new Error(data.error || 'Failed to fetch current stocks');
@@ -35,7 +35,7 @@ export async function getCurrentStocks(): Promise<Stock> {
 
 export async function getNewStocks(): Promise<NewStocks | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/stocks/new`);
+    const response = await fetch(`${API_BASE_URL}/stocks/new`);
     const data = await response.json();
     if (!data.success) {
       if (data.error === "No data available for last week") {
@@ -50,7 +50,7 @@ export async function getNewStocks(): Promise<NewStocks | null> {
 }
 
 export async function getLogs(): Promise<Log[]> {
-  const response = await fetch(`${API_BASE_URL}/api/logs`);
+  const response = await fetch(`${API_BASE_URL}/logs`);
   const data = await response.json();
   if (!data.success) {
     throw new Error(data.error || 'Failed to fetch logs');

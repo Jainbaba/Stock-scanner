@@ -19,20 +19,30 @@ RUN pip install --no-cache-dir -r backend/requirements.txt gunicorn
 # Copy backend code
 COPY stock-scanner-backend/ ./backend/
 
-# Copy frontend code
-COPY stock-scanner-frontend/ ./frontend/
-
-# Install frontend dependencies and build
+# Set up frontend
 WORKDIR /app/frontend
+
+# Copy frontend code
+COPY stock-scanner-frontend/ ./
+
+# Use a compatible npm version
+RUN npm install -g npm@10.8.2
+
+# Install specific dependencies that were missing in the error message
+RUN npm install tailwindcss postcss autoprefixer --save-dev
+
+# Make sure all dependencies are installed properly
+RUN npm install
+
+# Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_PUBLIC_API_URL=/api
-RUN npm install
+
 RUN npm run build
 
 # Set up nginx configuration
 WORKDIR /app
-RUN echo ' \
-server { \
+RUN echo 'server { \
     listen 80; \
     \
     location / { \
@@ -58,31 +68,30 @@ server { \
     location /health { \
         proxy_pass http://localhost:5000/health; \
     } \
-} \
-' > /etc/nginx/sites-available/default
+}' > /etc/nginx/sites-available/default
 
-# Create startup script
-RUN echo '#!/bin/bash \
-set -e \
-\
-# Start nginx \
-service nginx start \
-\
-# Start backend in background \
-cd /app/backend && gunicorn --bind 0.0.0.0:5000 app:app & \
-\
-# Start frontend and wait for it \
-cd /app/frontend && npm start \
-' > /app/start.sh && chmod +x /app/start.sh
+# Create a proper startup script with correct line breaks
+RUN echo '#!/bin/bash' > /app/start.sh && \
+    echo 'set -e' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start nginx' >> /app/start.sh && \
+    echo 'service nginx start' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start backend in background' >> /app/start.sh && \
+    echo 'cd /app/backend && gunicorn --bind 0.0.0.0:5000 app:app &' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start frontend and wait for it' >> /app/start.sh && \
+    echo 'cd /app/frontend && npm start' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 # Environment variables
-ENV PORT=80
+ENV PORT=8000
 ENV FLASK_ENV=production
 ENV MONGODB_URI=mongodb+srv://jainbaba:svQK5gZah6fCF7pW@stock-scanner.usflx.mongodb.net/?retryWrites=true&w=majority&appName=stock-scanner
 ENV CORS_ORIGIN=http://localhost
 
 # Expose port
-EXPOSE 80
+EXPOSE 8000
 
 # Start all services
 CMD ["/app/start.sh"]
