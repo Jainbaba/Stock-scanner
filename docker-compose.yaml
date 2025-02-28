@@ -1,0 +1,15 @@
+services:
+  stock-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - PORT=80
+      - FLASK_ENV=production
+      - MONGODB_URI=${MONGODB_URI}
+      - CORS_ORIGIN=http://localhost
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
