@@ -4,6 +4,7 @@ export interface Stock {
   yearweek: string;
   created_date: string;
   symbols: string[];
+  formatted_symbols: string[];
   count: number;
 }
 
@@ -32,13 +33,20 @@ export async function getCurrentStocks(): Promise<Stock> {
   return data.data;
 }
 
-export async function getNewStocks(): Promise<NewStocks> {
-  const response = await fetch(`${API_BASE_URL}/api/stocks/new`);
-  const data = await response.json();
-  if (!data.success) {
-    throw new Error(data.error || 'Failed to fetch new stocks');
+export async function getNewStocks(): Promise<NewStocks | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/stocks/new`);
+    const data = await response.json();
+    if (!data.success) {
+      if (data.error === "No data available for last week") {
+        return null;
+      }
+      throw new Error(data.error || 'Failed to fetch new stocks');
+    }
+    return data.data;
+  } catch (error) {
+    throw error;
   }
-  return data.data;
 }
 
 export async function getLogs(): Promise<Log[]> {

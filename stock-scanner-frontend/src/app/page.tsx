@@ -4,16 +4,19 @@ import { getCurrentStocks, getNewStocks, getLogs } from '@/services/api';
 import type { Stock, NewStocks, Log } from '@/services/api';
 import { 
   Container, 
-  Tabs, 
-  Tab, 
   Box,
   Typography,
-  Button,
   Stack,
-  Link
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
 } from '@mui/material';
 import { Loading } from '@/components/ui/loading';
 import { ErrorMessage } from '@/components/ui/error';
+import CurrentStocksView from '@/components/CurrentStocks';
+import NewStocksView from '@/components/NewStocks';
+import NotificationMenu from '@/components/NotificationMenu';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Home() {
   const [currentStocks, setCurrentStocks] = useState<Stock | null>(null);
@@ -21,7 +24,24 @@ export default function Home() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
+  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const theme = createTheme({
+    palette: {
+      mode,
+      primary: {
+        main: mode === 'light' ? '#2196f3' : '#90caf9',
+      },
+      secondary: {
+        main: mode === 'light' ? '#f50057' : '#f48fb1',
+      },
+      background: {
+        default: mode === 'light' ? '#f5f5f5' : '#121212',
+        paper: mode === 'light' ? '#ffffff' : '#1e1e1e',
+      },
+    },
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,76 +67,62 @@ export default function Home() {
     fetchData();
   }, []);
 
-  if (loading) return <Loading />;
-  if (error) return <ErrorMessage message={error} />;
+  useEffect(() => {
+    const savedMode = localStorage.getItem('theme-mode') as 'light' | 'dark' | null;
+    if (savedMode) {
+      setMode(savedMode);
+    }
+  }, []);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
   };
 
+  const toggleTheme = () => {
+    const newMode = mode === 'light' ? 'dark' : 'light';
+    setMode(newMode);
+    localStorage.setItem('theme-mode', newMode);
+  };
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  if (loading) return <Loading />;
+  if (error) {
+    return <ErrorMessage message={error} />;
+  }
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack spacing={4}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Stock Scanner
-        </Typography>
-
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab label="Current Stocks" />
-            <Tab label="New Stocks" />
-            <Tab label="Logs" />
-          </Tabs>
-        </Box>
-
-        <Box role="tabpanel" hidden={tabValue !== 0}>
-          {tabValue === 0 && (
-            <Box>
-              {/* Add your current stocks content here */}
-              <pre>{JSON.stringify(currentStocks, null, 2)}</pre>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Stack spacing={4}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h4" component="h1" gutterBottom>
+              Stock Scanner
+            </Typography>
+            <Box display="flex" alignItems="center">
+              <ThemeToggle mode={mode} toggleTheme={toggleTheme} />
+              <NotificationMenu logs={logs} />
             </Box>
-          )}
-        </Box>
+          </Box>
 
-        <Box role="tabpanel" hidden={tabValue !== 1}>
-          {tabValue === 1 && (
-            <Box>
-              {/* Add your new stocks content here */}
-              <pre>{JSON.stringify(newStocks, null, 2)}</pre>
-            </Box>
-          )}
-        </Box>
-
-        <Box role="tabpanel" hidden={tabValue !== 2}>
-          {tabValue === 2 && (
-            <Box>
-              {/* Add your logs content here */}
-              <pre>{JSON.stringify(logs, null, 2)}</pre>
-            </Box>
-          )}
-        </Box>
-
-        <Stack direction="row" spacing={2} justifyContent="center">
-          <Button 
-            variant="contained" 
-            component={Link}
-            href="https://vercel.com/new"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Deploy Now
-          </Button>
-          <Button 
-            variant="outlined"
-            component={Link}
-            href="https://nextjs.org/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read Docs
-          </Button>
+          <CurrentStocksView 
+            currentStocks={currentStocks || { yearweek: '', created_date: '', count: 0, formatted_symbols: [] }} 
+            handleCopy={handleCopy} 
+          />
+          <NewStocksView newStocks={newStocks} handleCopy={handleCopy} />
         </Stack>
-      </Stack>
-    </Container>
+      </Container>
+    </ThemeProvider>
   );
 }

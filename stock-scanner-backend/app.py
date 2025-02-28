@@ -10,13 +10,14 @@ from store import (
     get_recent_logs
 )
 from chartlink_scanner import Chartlink_Scanner
-from tv_screener import fetch_tv_symbols
+from tv_screener import fetch_nse_symbol, fetch_tv_symbols
+from typing import List
 
 app = Flask(__name__)
 
 # Get CORS origin from environment variable
 CORS_ORIGIN = os.getenv('CORS_ORIGIN', 'http://localhost:3000')
-CORS(app, origins=[CORS_ORIGIN])
+CORS(app, origins=CORS_ORIGIN)
 
 startup_delay = int(os.getenv('STARTUP_DELAY_SECONDS', '5'))
 time.sleep(startup_delay)
@@ -66,6 +67,24 @@ def trigger_fetch():
             "error": str(e)
         }), 500
 
+def format_stocks_for_display(symbols: List[str]) -> List[str]:
+    """Format stocks into groups of 30 with exchange prefixes."""
+    api_list = fetch_nse_symbol()
+    modified_list = []
+    for stock in symbols:
+        if stock in api_list:
+            modified_list.append(f"NSE:{stock}")
+        else:
+            modified_list.append(f"BSE:{stock}")
+
+    concatenated_strings = []
+    for i in range(0, len(modified_list), 30):
+        chunk = modified_list[i:i+30]
+        concatenated_string = ','.join(chunk)
+        concatenated_strings.append(concatenated_string)
+
+    return concatenated_strings
+
 @app.route('/api/stocks/current', methods=['GET'])
 def get_current_stocks():
     """Get current week's stock data."""
@@ -77,6 +96,9 @@ def get_current_stocks():
                 "success": False,
                 "error": "No data available for current week"
             }), 404
+        
+        formatted_symbols = format_stocks_for_display(current_week["symbols"])
+        current_week["formatted_symbols"] = formatted_symbols
         
         return jsonify({
             "success": True,

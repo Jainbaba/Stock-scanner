@@ -1,4 +1,0 @@
-{
-  "schedule": "0 17 * * 5",
-  "command": "curl -X POST https://your-backend-railway-url.railway.app/api/trigger-fetch"
-} 

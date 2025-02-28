@@ -61,22 +61,3 @@ class Chartlink_Scanner:
             return [stock['nsecode'] for stock in self.data['data']]
         except (KeyError, TypeError) as e:
             raise Exception(f"Error processing symbols: {str(e)}")
-        
-
-def create_concatenated_string(stock_list: List[str]) -> List[str]:
-    """Create concatenated strings from stock list."""
-    api_list = fetch_nse_symbol()
-    modified_list = []
-    for stock in stock_list:
-        if stock in api_list:
-            modified_list.append(f"NSE:{stock}")
-        else:
-            modified_list.append(f"BSE:{stock}")
-
-    concatenated_strings = []
-    for i in range(0, len(modified_list), 30):
-        chunk = modified_list[i:i+30]
-        concatenated_string = ','.join(chunk)
-        concatenated_strings.append(concatenated_string)
-
-    return concatenated_strings
