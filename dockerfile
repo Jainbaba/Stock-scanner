@@ -38,6 +38,7 @@ RUN npm install
 ENV NODE_ENV=production
 ENV NEXT_PUBLIC_API_URL=/api
 
+# Build the frontend
 RUN npm run build
 
 # Set up nginx configuration
@@ -70,7 +71,7 @@ RUN echo 'server { \
     } \
 }' > /etc/nginx/sites-available/default
 
-# Create a proper startup script with correct line breaks
+# Create startup script
 RUN echo '#!/bin/bash' > /app/start.sh && \
     echo 'set -e' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
@@ -87,11 +88,14 @@ RUN echo '#!/bin/bash' > /app/start.sh && \
 # Environment variables
 ENV PORT=8000
 ENV FLASK_ENV=production
-ENV MONGODB_URI=mongodb+srv://jainbaba:svQK5gZah6fCF7pW@stock-scanner.usflx.mongodb.net/?retryWrites=true&w=majority&appName=stock-scanner
 ENV CORS_ORIGIN=http://localhost
 
 # Expose port
 EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/health || exit 1
 
 # Start all services
 CMD ["/app/start.sh"]
